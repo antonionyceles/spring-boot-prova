@@ -1,0 +1,50 @@
+version: '3.7'
+services:
+  postgres:
+    image: postgres:13.1
+    healthcheck:
+      test:
+      - CMD
+      - pg_isready
+      - -q
+      - -d
+      - postgres
+      - -U
+      - root
+      timeout: 45s
+      interval: 10s
+      retries: 10
+    restart: always
+    networks:
+    - spring-prova-networks
+    environment:
+    - POSTGRES_USER=postgres
+    - POSTGRES_PASSWORD=123456
+    - APP_DB_USER=dbprova
+    - APP_DB_PASS=123456
+    - APP_DB_NAME=dbprova
+    volumes:
+    - ./db:/docker-entrypoint-initdb.d/
+    ports:
+    - 5432:5432
+  prova:
+    build: .
+    image: prova
+    restart: on-failure
+    depends_on:
+    - postgres
+    ports:
+    - 8090:8090
+    environment:
+    - DATABASE_HOST=postgres
+    - DATABASE_USER=dbprova
+    - DATABASE_PASSWORD=123456
+    - DATABASE_NAME=dbprova
+    - DATABASE_PORT=5432
+    volumes:
+    - ./db:/docker-prova/
+    networks:
+    - spring-prova-networks
+networks:
+  spring-prova-networks:
+    driver: bridge
